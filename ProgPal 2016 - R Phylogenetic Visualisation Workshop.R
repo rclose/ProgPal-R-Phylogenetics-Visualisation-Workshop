@@ -3,9 +3,12 @@
 # =                  Roger Close                        =
 # =======================================================
 
+# https://github.com/rclose/ProgPal-R-Phylogenetics-Visualisation-Workshop
+
 # This workshop borrows heavily from tutorials by Liam Revell (and his phytools.org blog) and Lars Schmitz:
 # http://www.phytools.org/eqg/Exercise_3.2/
 # https://ecomorph.wordpress.com/2014/10/09/phylogenetic-trees-in-r-4/
+# http://lukejharmon.github.io/ilhabela/instruction/2015/07/05/plotting-methods/ #some very fancy visualisation methods
 
 
 # ==========================================================
@@ -216,8 +219,9 @@ phenogram(t5, x[t5$tip.label], col = "darkgreen", ylim = range(x)); title(main =
 dev.off()
 
 #colouring branches by trait colour using phytools functions
-plotBranchbyTrait(ladderize(t3), x, mode = "tips")
-contMap(ladderize(t3), x)
+fancyTree(t3,type = "phenogram95", x = x, spread.cost = c(1,0)) #phenogram with 95% confidence intervals on maximum likelihood ancestral-state values
+plotBranchbyTrait(ladderize(t3), x, mode = "tips") #colour edges of tree according to ancestral states reconstructed from tip values
+contMap(ladderize(t3), x, type = "fan") #similar method for plotting evolution of continuous character onto tree
 
 # ==================================================
 # = Timescale a tree using a posteriori algorithms =
@@ -350,6 +354,7 @@ c(t1,t2,t3,t4)
 #to install:
 # source("https://bioconductor.org/biocLite.R")
 # biocLite("ggtree")
+# biocLite("EBImage")
 library(ggtree); library(ggplot2)
 vignette("ggtree", package = "ggtree")
 
@@ -363,8 +368,8 @@ ggtree(tree, aes(color = branch.length)) +
 pp <- ggtree(tree) %>% phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "steelblue", alpha = .3)
 pp
 
-pp %>% phylopic("67382184-5135-4faa-8e98-eadff02c3e8a", color = "#86B875", alpha = .8, node = 4, width = 4) %>%
-	phylopic("d3563b54-780f-4711-a49a-7ea051e9dacc", color = "darkcyan", alpha = .8, node = 17, width = 8)
+pp %>% phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "#86B875", alpha = .8, node = 4, width = 0.1) %>%
+	phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "darkcyan", alpha = .8, node = 17, width = 0.1)
 
 beast_file <- system.file("examples/MCC_FluA_H3.tree", package = "ggtree")
 beast_tree <- read.beast(beast_file)

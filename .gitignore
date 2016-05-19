@@ -2,23 +2,13 @@ packrat/lib*/
 .Rproj.user
 
 *.lock
-
 *.opts
-
 *.gz
-
 packrat/init.R
-
 ProgPal R Phylogenetics Visualisation Workshop.Rproj
-
 example.trees
-
 progpaltopology.nex
-
 progpaltopology.tre
-
 .Rprofile
-
 .Rhistory
-
 .RData
