@@ -81,7 +81,6 @@ edgelabels(frame = "circle") #row-numbers for edges
 # ======================================
 # = Reading and writing trees to files =
 # ======================================
-
 #we can now save this tree for posterity:
 write.tree(tshirt, "progpaltopology.tre")
 
@@ -92,9 +91,10 @@ cat(readLines("progpaltopology.tre"))
 tshirt <- read.tree("progpaltopology.tre") #see also read.nexus if you're reading in a tree in Nexus (.nex) format.
 
 #it's also possible to read and write trees in Nexus format (requires phytools):
-writeNexus(tree, "progpaltopology.nex")
+writeNexus(tshirt, "progpaltopology.nex")
 cat(readLines("progpaltopology.nex"), sep = "\n") #look at the structure
 
+tshirt <- read.nexus("progpaltopology.nex")
 
 # ===============================
 # = Binary and non-binary trees =
@@ -148,7 +148,7 @@ plot(t4, show.tip.label = F); axisPhylo()
 
 #rotating clades in plotting (useful for producing figures)
 plot(tshirt, edge.width = 2, label.offset = 0.5); nodelabels()
-rt.13 <- rotate(tshirt, 13) #rotate node 13
+rt.13 <- ape::rotate(tshirt, 13) #rotate node 13
 plot(rt.13, edge.width = 2, label.offset = 0.5); nodelabels()
 
 #reroot a tree using a different outgroup taxon
@@ -157,6 +157,10 @@ plot(rr.tshirt); nodelabels()
 
 #binding trees together
 plot(bind.tree(t1,t2))
+
+#we can also drop random or specific tips:
+plot(drop.tip(phy = tshirt, tip = sample(x = tshirt$tip.label, size = 5, replace = FALSE))) #drop 5 random tips
+plot(drop.tip(tshirt, c("Tyto","Octopus"))) #drop specific tips
 
 #we could also drop the extinct tips, leaving only extant taxa
 #first, we need to calculate the $root.time (especially if none of your tips are at the present), like so:
@@ -170,9 +174,6 @@ plot(t5, show.tip.label = F); axisPhylo()
 t6 <- dropExtant(t3, tol = 0.01)
 plot(t6, show.tip.label = F); axisPhylo()
 
-#we can also drop random or specific tips:
-plot(drop.tip(phy = tshirt, tip = sample(x = tshirt$tip.label, size = 5, replace = FALSE))) #drop 5 random tips
-plot(drop.tip(tshirt, c("Tyto","Octopus"))) #drop specific tips
 
 #conversely, we could extract clades using a similar procedure
 subtree <- extract.clade(phy = tshirt, node = getMRCA(phy = tshirt, tip = c("Octopus","Glyptodon")))
@@ -216,10 +217,10 @@ phenogram(t6, x[t6$tip.label], col = "darkred", ylim = range(x)); title(main = "
 phenogram(t5, x[t5$tip.label], col = "darkgreen", ylim = range(x)); title(main = "Extant")
 
 #turn off the graphics device
-dev.off()
+graphics.off()
 
 #colouring branches by trait colour using phytools functions
-fancyTree(t3,type = "phenogram95", x = x, spread.cost = c(1,0)) #phenogram with 95% confidence intervals on maximum likelihood ancestral-state values
+fancyTree(t5,type = "phenogram95", x = x[t5$tip.label], spread.cost = c(1,0)) #phenogram with 95% confidence intervals on maximum likelihood ancestral-state values
 plotBranchbyTrait(ladderize(t3), x, mode = "tips") #colour edges of tree according to ancestral states reconstructed from tip values
 contMap(ladderize(t3), x, type = "fan") #similar method for plotting evolution of continuous character onto tree
 
@@ -232,13 +233,15 @@ timeData <- matrix(data = c(3,0,130,0,0,500,70,0,250,30,510,2,0,115,0,0,490,65,0
 timeData
 
 #this function call timescales our dubious tree using dubious tip-ages and the Minimum Branch Length (MBL) algorithm
-timescaled.tree <- timePaleoPhy(tree = tshirt, timeData = timeData, type = "mbl", vartime = 10)
+# plot(timescaled.tree <- timePaleoPhy(tree = tshirt, timeData = timeData, type = "equal", vartime = 1)
 
 #we can now plot our timescaled tree
 plot(timescaled.tree, edge.width = 2, label.offset = 0.5)
 
 #we can also add a basic timescale using this function from ape:
 axisPhylo()
+abline(v = timescaled.tree$root.time-65, col = "red")
+abline(v = timescaled.tree$root.time-201, col = "red", lty = 3)
 
 #there are now more elements listed in the tree object
 timescaled.tree$root.time
@@ -247,14 +250,16 @@ timescaled.tree$root.time
 timescaled.tree$edge.length
 
 #we can see how they map into the tree like so:
-edgelabels(text = timescaled.tree$edge.length, frame = "circle", cex = 0.6)
+edgelabels(text = timescaled.tree$edge.length, frame = "circle", cex = 0.06)
 
 #i.e., like this:
 cbind(timescaled.tree$edge, timescaled.tree$edge.length)
 
 #in the 'strap' and 'geoscale' packages there are handy functions for affixing geological timescales to your trees
+install.packages("strap") #geoscale
+pdf(file = "thisisareallycoolfigure.pdf", height = 20, width = 50)
 geoscalePhylo(timescaled.tree, timeData, units = c("Period","Epoch"), tick.scale = "no", boxes = "Period", cex.tip = 0.7, quat.rm = T, cex.ts = 0.6)
-
+dev.off()
 
 
 # ===========================
@@ -262,6 +267,7 @@ geoscalePhylo(timescaled.tree, timeData, units = c("Period","Epoch"), tick.scale
 # ===========================
 
 #this is how to ladderise your tree --- very useful for publications
+plot(tshirt, direction = "up", label.offset = 0.1)
 plot(ladderize(tshirt, right = F), direction = "up", label.offset = 0.1)
 plot(ladderize(tshirt, right = T), direction = "up", label.offset = 0.1)
 
@@ -286,16 +292,9 @@ plot(tshirt, label.offset = 0.2)
 rainbow.tip.cols <- rainbow(length(tshirt$tip.label))
 names(rainbow.tip.cols) <- tshirt$tip.label
 rainbow.tip.cols
-tiplabels(pch = 23, cex = 2, bg = rainbow.tip.cols)
+tiplabels(pch = 21, cex = 2, bg = rainbow.tip.cols)
 rainbow.tip.cols["Papilio"] <- "cornflowerblue"
 plot(tshirt, label.offset = 0.2); tiplabels(pch = 23, cex = 2, bg = rainbow.tip.cols)
-
-
-#this is how to add a box around a clade
-
-
-#this is how to map a trait onto the branches of a tree
-
 
 #this is a neat little function that makes a vector of gradient colours reflecting your trait values (in this case, branch duration)
 color.gradient <- function(x, colors=c(lo.col,mid.col,hi.col), colsteps=20) {
@@ -307,15 +306,22 @@ edge.cols <- color.gradient(timescaled.tree$edge.length, colors = c("red","pink"
 #you can then plot them
 plot(timescaled.tree, edge.width = 4, edge.color = edge.cols)
 
+#similar, but for tip labels:
+y <- runif(length(tshirt$tip.label), 0, 1) #generate a vector of values between 0 and 1
+names(y) <- tshirt$tip.label
+y.cols <- color.gradient(y, colors = c("red","yellow","darkgreen"), colsteps = 10)
+
+plot.phylo(timescaled.tree, edge.width = 4, label.offset = 20, root.edge = T, align.tip.label = T)
+tiplabels(pch = 21, bg = y.cols, cex = 3)
+
+
 #this is how you annotate a node with a label
 plot(timescaled.tree, x.lim = c(0,1.25*max(nodeHeights(timescaled.tree))))
 nodelabels(c(":(",":'("), c(19,14), frame = "none", adj = c(2,-1.5))
 nodelabels("=)", 12, frame = "circle", cex = 2, bg = "cornflowerblue", col = "yellow")
 cladelabels(timescaled.tree, node = 19, "\nDefinitely A Real Clade", offset = -2) #the '\n' inserts a new line to improve spacing
 cladelabels(timescaled.tree, node = 14, "\nOMG!")
-cladelabels(timescaled.tree, node = 12, "LOL!", offset = 5, orientation = "horizontal", cex = 2)
-
-#this is how you can map images onto your plots (e.g. silhouettes)
+cladelabels(timescaled.tree, node = 12, "LOL!", offset = 0, orientation = "horizontal", cex = 2)
 
 
 
@@ -368,8 +374,8 @@ ggtree(tree, aes(color = branch.length)) +
 pp <- ggtree(tree) %>% phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "steelblue", alpha = .3)
 pp
 
-pp %>% phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "#86B875", alpha = .8, node = 4, width = 0.1) %>%
-	phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "darkcyan", alpha = .8, node = 17, width = 0.1)
+pp %>% phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "#86B875", alpha = .8, node = 4, width = 1) %>%
+	phylopic("79ad5f09-cf21-4c89-8e7d-0c82a00ce728", color = "darkcyan", alpha = .8, node = 17, width = 1)
 
 beast_file <- system.file("examples/MCC_FluA_H3.tree", package = "ggtree")
 beast_tree <- read.beast(beast_file)

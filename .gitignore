@@ -12,3 +12,5 @@ progpaltopology.tre
 .Rprofile
 .Rhistory
 .RData
+
+*.pdf
